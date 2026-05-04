@@ -61,7 +61,8 @@ try:
 except ImportError:
     _HAS_TRAY = False
 
-# ── Injected by download-bridge endpoint ───────────────────────────────────
+# ── Build metadata (replaced by CI at build time) ──────────────────────────
+VERSION = "dev"
 CONNECTION_CODE = ""
 
 # ── Constants ───────────────────────────────────────────────────────────────
@@ -559,7 +560,7 @@ class BridgeWindow:
         self._scanning = False
         self._bridge_thread: Optional[threading.Thread] = None
 
-        root.title("ProPresenter Bridge")
+        root.title(f"ProPresenter Bridge  {VERSION}")
         root.resizable(True, True)
         root.minsize(540, 560)
         root.protocol("WM_DELETE_WINDOW", self._on_close)

@@ -19,6 +19,9 @@ jobs:
       - name: Install dependencies
         run: pip install requests websockets certifi pystray Pillow zeroconf pyinstaller
 
+      - name: Inject version
+        run: python -c "import re, sys; t=open('main.py').read(); open('main.py','w').write(re.sub(r'VERSION = \"dev\"', 'VERSION = \"${{ github.ref_name }}\"', t))"
+
       - name: Build exe
         run: >
           pyinstaller
@@ -49,6 +52,9 @@ jobs:
 
       - name: Install dependencies
         run: pip install requests websockets certifi pystray Pillow zeroconf pyinstaller
+
+      - name: Inject version
+        run: python3 -c "import re; t=open('main.py').read(); open('main.py','w').write(re.sub(r'VERSION = \"dev\"', 'VERSION = \"${{ github.ref_name }}\"', t))"
 
       - name: Build app
         run: >
