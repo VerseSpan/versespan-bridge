@@ -169,14 +169,18 @@ class ProPresenterClient:
         return _check_port(self.host, self.port, timeout=1.0)
 
     def get_active_presentation(self) -> Optional[dict]:
-        # Response: {"uuid": "...", "name": "...", "index": <slide_index>}
-        data = self._get("/presentation/active")
+        # /presentation/slide_index returns both the active presentation and
+        # the current slide index in one call.
+        # Response: {"slide_index": {"index": N, "presentation_id": {"uuid", "name", "index"}}}
+        data = self._get("/presentation/slide_index")
         if not data:
             return None
+        slide_info = data.get("slide_index", {})
+        pres = slide_info.get("presentation_id", {})
         return {
-            "name": data.get("name", ""),
-            "uuid": data.get("uuid", ""),
-            "slide_index": data.get("index", 0),
+            "name": pres.get("name", ""),
+            "uuid": pres.get("uuid", ""),
+            "slide_index": slide_info.get("index", 0),
         }
 
     def get_libraries(self) -> list:
