@@ -33,9 +33,16 @@ from pathlib import Path
 from tkinter import messagebox, scrolledtext, ttk
 from typing import Optional
 
+import ssl
+
+import certifi
 import requests
 import websockets
 import websockets.exceptions
+
+# SSL context using certifi's CA bundle — required for PyInstaller builds on
+# macOS/Windows where the system certificate store isn't accessible
+_SSL_CONTEXT = ssl.create_default_context(cafile=certifi.where())
 
 # ── Optional: zeroconf for mDNS discovery ──────────────────────────────────
 try:
@@ -146,6 +153,7 @@ class ProPresenterClient:
         self.base = f"http://{host}:{port}/v1"
         self._session = requests.Session()
         self._session.timeout = 2
+        self._session.verify = certifi.where()
 
     def _get(self, path: str) -> Optional[dict]:
         try:
@@ -403,7 +411,7 @@ async def _run_bridge(cfg: dict):
         logger.info(f"ProPresenter found at {pp_host}:{pp_port}")
 
         try:
-            async with websockets.connect(ws_url, ping_interval=PING_INTERVAL_SEC) as ws:
+            async with websockets.connect(ws_url, ssl=_SSL_CONTEXT, ping_interval=PING_INTERVAL_SEC) as ws:
                 state.backend_connected = True
                 host_display = backend_url.replace("https://", "").replace("http://", "")
                 state.backend_status = f"{host_display} — connected"

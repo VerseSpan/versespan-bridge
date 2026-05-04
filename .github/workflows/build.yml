@@ -17,7 +17,7 @@ jobs:
           python-version: "3.11"
 
       - name: Install dependencies
-        run: pip install requests websockets pystray Pillow zeroconf pyinstaller
+        run: pip install requests websockets certifi pystray Pillow zeroconf pyinstaller
 
       - name: Build exe
         run: >
@@ -29,6 +29,7 @@ jobs:
           --hidden-import tkinter.scrolledtext
           --hidden-import tkinter.messagebox
           --collect-submodules tkinter
+          --collect-data certifi
           main.py
 
       - uses: actions/upload-artifact@v4
@@ -47,7 +48,7 @@ jobs:
           python-version: "3.11"
 
       - name: Install dependencies
-        run: pip install requests websockets pystray Pillow zeroconf pyinstaller
+        run: pip install requests websockets certifi pystray Pillow zeroconf pyinstaller
 
       - name: Build app
         run: >
@@ -60,6 +61,7 @@ jobs:
           --hidden-import tkinter.scrolledtext
           --hidden-import tkinter.messagebox
           --collect-submodules tkinter
+          --collect-data certifi
           main.py
 
       - name: Zip .app bundle

@@ -1,5 +1,6 @@
 requests
 websockets
+certifi
 pystray
 Pillow
 zeroconf
