@@ -236,27 +236,57 @@ class ProPresenterClient:
         return [{"name": p.get("name", ""), "uuid": p.get("uuid", "")} for p in items]
 
     def get_presentation(self, uuid: str) -> Optional[dict]:
-        # Response: {"presentation": {"id": {...}, "slides": [{"id": {...}, "text": "..."}]}}
+        # Response mirrors /presentation/active: {"presentation": {"groups": [{"slides": [...]}]}}
         data = self._get(f"/presentation/{uuid}")
         if not data:
             return None
-        import re
-
         pres = data.get("presentation", data) if isinstance(data, dict) else {}
-        slides = pres.get("slides", [])
+        groups = pres.get("groups", [])
         texts = []
-        for slide in slides:
-            # Try plain text field first, fall back to RTF
-            text = slide.get("text", "") or slide.get("id", {}).get("text", "")
-            if not text:
-                # RTF fallback in elements
-                for element in slide.get("elements", []):
-                    rtf = element.get("element", {}).get("text", {}).get("rtfData", "")
-                    if rtf:
-                        text = re.sub(r"[{}\\]", "", rtf).strip()
-            if text:
-                texts.append(text)
+        for group in groups:
+            for slide in group.get("slides", []):
+                text = slide.get("text", "")
+                if text:
+                    texts.append(text)
         return {"slide_text": texts or None}
+
+    def get_playlists(self) -> list:
+        # Response: [{"id": {"uuid": "...", "name": "...", "index": N}, "items": [...]}]
+        data = self._get("/playlist/playlists")
+        if not data:
+            return []
+        items = data if isinstance(data, list) else data.get("playlists", [])
+        return [
+            {
+                "id": item.get("id", {}).get("uuid", item.get("uuid", "")),
+                "name": item.get("id", {}).get("name", item.get("name", "")),
+            }
+            for item in items
+            if item.get("id", {}).get("uuid", item.get("uuid", ""))
+        ]
+
+    def get_playlist_items(self, playlist_id: str) -> list:
+        # Each item may be type "presentation" with a presentation reference
+        data = self._get(f"/playlist/{playlist_id}")
+        if not data:
+            return []
+        items = data.get("items", data if isinstance(data, list) else [])
+        presentations = []
+        for item in items:
+            # Items can be presentations, headers, or sections — skip non-presentations
+            item_type = item.get("type", "")
+            if item_type and item_type != "presentation":
+                continue
+            # Presentation reference is nested under "presentation" or directly as "id"
+            pres = item.get("presentation", {})
+            pres_id = pres.get("id", {}) if pres else item.get("id", {})
+            uuid = pres_id.get("uuid", "") if isinstance(pres_id, dict) else ""
+            name = pres_id.get("name", "") if isinstance(pres_id, dict) else ""
+            if not name:
+                name = item.get("name", "")
+            if uuid and name:
+                presentations.append({"name": name, "uuid": uuid})
+        return presentations
 
 
 # ══════════════════════════════════════════════════════════════════════════════
@@ -540,6 +570,10 @@ async def _handle_backend_message(ws, msg: dict, pp_client: ProPresenterClient):
         await ws.send(json.dumps({"type": "libraries_reply", "libraries": pp_client.get_libraries()}))
     elif t == "get_library":
         await ws.send(json.dumps({"type": "library_reply", "presentations": pp_client.get_library(msg.get("id", ""))}))
+    elif t == "get_playlists":
+        await ws.send(json.dumps({"type": "playlists_reply", "playlists": pp_client.get_playlists()}))
+    elif t == "get_playlist":
+        await ws.send(json.dumps({"type": "playlist_reply", "presentations": pp_client.get_playlist_items(msg.get("id", ""))}))
     elif t == "get_presentation":
         data = pp_client.get_presentation(msg.get("uuid", ""))
         await ws.send(
