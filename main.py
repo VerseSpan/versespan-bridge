@@ -221,7 +221,7 @@ class ProPresenterClient:
         items = data if isinstance(data, list) else data.get("libraries", [])
         return [
             {
-                "uuid": item.get("id", {}).get("uuid", item.get("uuid", "")),
+                "id": item.get("id", {}).get("uuid", item.get("uuid", "")),
                 "name": item.get("id", {}).get("name", item.get("name", "")),
             }
             for item in items
@@ -251,8 +251,8 @@ class ProPresenterClient:
         return {"slide_text": texts or None}
 
     def get_playlists(self) -> list:
-        # Response: [{"id": {"uuid": "...", "name": "...", "index": N}, "items": [...]}]
-        data = self._get("/playlist/playlists")
+        # Mirrors the libraries pattern: /v1/playlists returns list of playlists
+        data = self._get("/playlists")
         if not data:
             return []
         items = data if isinstance(data, list) else data.get("playlists", [])
