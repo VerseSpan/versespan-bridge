@@ -228,7 +228,7 @@ class ProPresenterClient:
         ]
 
     def get_library(self, lib_id: str) -> list:
-        # Response: {"updateType": "...", "items": [{"uuid": "...", "name": "...", "index": N}]}
+        # GET /v1/library/{id} → {updateType, items: [{uuid, name, index}]}
         data = self._get(f"/library/{lib_id}")
         if not data:
             return []
@@ -266,24 +266,19 @@ class ProPresenterClient:
         ]
 
     def get_playlist_items(self, playlist_id: str) -> list:
-        # Each item may be type "presentation" with a presentation reference
+        # GET /v1/playlist/{id} → {id, items: [{id: {uuid,name,index}, type, target_uuid, ...}]}
+        # Only "presentation" type items; target_uuid is the real presentation UUID.
         data = self._get(f"/playlist/{playlist_id}")
         if not data:
             return []
         items = data.get("items", data if isinstance(data, list) else [])
         presentations = []
         for item in items:
-            # Items can be presentations, headers, or sections — skip non-presentations
-            item_type = item.get("type", "")
-            if item_type and item_type != "presentation":
+            if item.get("type") != "presentation":
                 continue
-            # Presentation reference is nested under "presentation" or directly as "id"
-            pres = item.get("presentation", {})
-            pres_id = pres.get("id", {}) if pres else item.get("id", {})
-            uuid = pres_id.get("uuid", "") if isinstance(pres_id, dict) else ""
-            name = pres_id.get("name", "") if isinstance(pres_id, dict) else ""
-            if not name:
-                name = item.get("name", "")
+            item_id = item.get("id", {})
+            name = item_id.get("name", "") if isinstance(item_id, dict) else ""
+            uuid = item.get("target_uuid") or (item_id.get("uuid", "") if isinstance(item_id, dict) else "")
             if uuid and name:
                 presentations.append({"name": name, "uuid": uuid})
         return presentations
