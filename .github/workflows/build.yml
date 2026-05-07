@@ -26,7 +26,7 @@ jobs:
         run: >
           pyinstaller
           --onefile
-          --name VerbBridge-Bridge
+          --name VerbBridge²
           --hidden-import tkinter
           --hidden-import tkinter.ttk
           --hidden-import tkinter.scrolledtext
@@ -38,7 +38,7 @@ jobs:
       - uses: actions/upload-artifact@v4
         with:
           name: windows-exe
-          path: dist/VerbBridge-Bridge.exe
+          path: dist/VerbBridge².exe
 
   build-macos:
     name: Build macOS .app
@@ -61,7 +61,7 @@ jobs:
           pyinstaller
           --onefile
           --windowed
-          --name VerbBridge-Bridge
+          --name VerbBridge²
           --hidden-import tkinter
           --hidden-import tkinter.ttk
           --hidden-import tkinter.scrolledtext
@@ -73,12 +73,12 @@ jobs:
       - name: Zip .app bundle
         run: |
           cd dist
-          zip -r VerbBridge-Bridge-mac.zip VerbBridge-Bridge.app
+          zip -r VerbBridge²-mac.zip VerbBridge².app
 
       - uses: actions/upload-artifact@v4
         with:
           name: macos-app
-          path: dist/VerbBridge-Bridge-mac.zip
+          path: dist/VerbBridge²-mac.zip
 
   release:
     name: Create GitHub Release
@@ -101,6 +101,6 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           files: |
-            artifacts/VerbBridge-Bridge.exe
-            artifacts/VerbBridge-Bridge-mac.zip
+            artifacts/VerbBridge².exe
+            artifacts/VerbBridge²-mac.zip
           generate_release_notes: true
