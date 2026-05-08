@@ -211,7 +211,17 @@ class ProPresenterClient:
         if not uuid:
             return None
 
-        return {"uuid": uuid, "name": name, "slide_index": slide_index, "slides": slides}
+        # Find which group the current slide belongs to
+        group_name = ""
+        slide_count = 0
+        for group in groups:
+            group_slides = group.get("slides", [])
+            if slide_count + len(group_slides) > slide_index:
+                group_name = group.get("name", "")
+                break
+            slide_count += len(group_slides)
+
+        return {"uuid": uuid, "name": name, "slide_index": slide_index, "slides": slides, "group_name": group_name}
 
     def get_libraries(self) -> list:
         # Response: [{"id": {"uuid": "...", "name": "...", "index": N}}]
@@ -498,6 +508,7 @@ async def _run_bridge(cfg: dict):
                         "uuid": active["uuid"],
                         "slide_index": last_slide,
                         "slide_text": slide_text,
+                        "group_name": active.get("group_name", ""),
                     }))
 
                 while not state.stop_event.is_set():
@@ -535,6 +546,7 @@ async def _run_bridge(cfg: dict):
                                 "uuid": active["uuid"],
                                 "slide_index": last_slide,
                                 "slide_text": slide_text,
+                                "group_name": active.get("group_name", ""),
                             }))
                         elif active["slide_index"] != last_slide:
                             last_slide = active["slide_index"]
@@ -545,6 +557,7 @@ async def _run_bridge(cfg: dict):
                                 "uuid": active["uuid"],
                                 "index": last_slide,
                                 "slide_text": slide_text,
+                                "group_name": active.get("group_name", ""),
                             }))
 
         except (OSError, websockets.exceptions.WebSocketException) as e:
