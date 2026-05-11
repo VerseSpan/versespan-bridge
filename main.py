@@ -193,9 +193,11 @@ class ProPresenterClient:
         groups = pres.get("groups", [])
 
         slides: list[str] = []
+        slide_labels: list[str] = []
         for group in groups:
             for slide in group.get("slides", []):
                 slides.append(slide.get("text", ""))
+                slide_labels.append(slide.get("label", ""))
 
         if not slides:
             return None
@@ -221,7 +223,16 @@ class ProPresenterClient:
                 break
             slide_count += len(group_slides)
 
-        return {"uuid": uuid, "name": name, "slide_index": slide_index, "slides": slides, "group_name": group_name}
+        slide_label = slide_labels[slide_index] if slide_index < len(slide_labels) else ""
+        return {
+            "uuid": uuid,
+            "name": name,
+            "slide_index": slide_index,
+            "slides": slides,
+            "slide_labels": slide_labels,
+            "slide_label": slide_label,
+            "group_name": group_name,
+        }
 
     def get_libraries(self) -> list:
         # Response: [{"id": {"uuid": "...", "name": "...", "index": N}}]
@@ -508,6 +519,7 @@ async def _run_bridge(cfg: dict):
                         "uuid": active["uuid"],
                         "slide_index": last_slide,
                         "slide_text": slide_text,
+                        "slide_label": active.get("slide_label", ""),
                         "group_name": active.get("group_name", ""),
                     }))
 
@@ -533,10 +545,12 @@ async def _run_bridge(cfg: dict):
                     active = pp_client.get_active_presentation()
                     if active:
                         slides = active["slides"]
+                        slide_labels = active.get("slide_labels", [])
                         if active["uuid"] != last_uuid:
                             last_uuid = active["uuid"]
                             last_slide = active["slide_index"]
                             slide_text = slides[last_slide] if last_slide < len(slides) else ""
+                            slide_label = slide_labels[last_slide] if last_slide < len(slide_labels) else ""
                             state.now_playing = active["name"] or "Unknown"
                             state.notify()
                             logger.info(f"Presentation: '{active['name']}' slide={last_slide} text={slide_text!r}")
@@ -546,17 +560,20 @@ async def _run_bridge(cfg: dict):
                                 "uuid": active["uuid"],
                                 "slide_index": last_slide,
                                 "slide_text": slide_text,
+                                "slide_label": slide_label,
                                 "group_name": active.get("group_name", ""),
                             }))
                         elif active["slide_index"] != last_slide:
                             last_slide = active["slide_index"]
                             slide_text = slides[last_slide] if last_slide < len(slides) else ""
+                            slide_label = slide_labels[last_slide] if last_slide < len(slide_labels) else ""
                             logger.info(f"Slide changed: {last_slide} text={slide_text!r}")
                             await ws.send(json.dumps({
                                 "type": "slide_changed",
                                 "uuid": active["uuid"],
                                 "index": last_slide,
                                 "slide_text": slide_text,
+                                "slide_label": slide_label,
                                 "group_name": active.get("group_name", ""),
                             }))
 
