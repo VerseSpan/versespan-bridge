@@ -157,13 +157,24 @@ class ProPresenterClient:
         self._session.verify = certifi.where()
 
     def _get(self, path: str) -> Optional[dict]:
-        try:
-            r = self._session.get(f"{self.base}{path}", timeout=2)
-            r.raise_for_status()
-            return r.json()
-        except Exception as e:
-            logger.warning(f"PP GET {path} → {type(e).__name__}: {e}")
-            return None
+        url = f"{self.base}{path}"
+        for attempt in range(2):
+            try:
+                r = self._session.get(url, timeout=2)
+                r.raise_for_status()
+                return r.json()
+            except Exception as e:
+                err = str(e)
+                # Stale keep-alive connection — close and retry once with a fresh one
+                if attempt == 0 and ("BadStatusLine" in err or "ConnectionAborted" in err or "Connection aborted" in err):
+                    self._session.close()
+                    self._session = requests.Session()
+                    self._session.timeout = 2
+                    self._session.verify = certifi.where()
+                    continue
+                logger.warning(f"PP GET {path} → {type(e).__name__}: {e}")
+                return None
+        return None
 
     def is_alive(self) -> bool:
         """Check ProPresenter is reachable via TCP (avoids JSON parsing issues)."""
@@ -654,7 +665,7 @@ class BridgeWindow:
 
         root.title(f"Versespan  {VERSION}")
         root.resizable(True, True)
-        root.minsize(540, 560)
+        root.minsize(540, 340 if sys.platform == "win32" else 560)
         root.protocol("WM_DELETE_WINDOW", self._on_close)
 
         self._build_ui()
