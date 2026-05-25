@@ -652,7 +652,7 @@ class BridgeWindow:
         self._scanning = False
         self._bridge_thread: Optional[threading.Thread] = None
 
-        root.title(f"VerbBridge²  {VERSION}")
+        root.title(f"Versespan  {VERSION}")
         root.resizable(True, True)
         root.minsize(540, 560)
         root.protocol("WM_DELETE_WINDOW", self._on_close)
@@ -964,7 +964,7 @@ class BridgeWindow:
             )
             try:
                 state.tray_icon.icon = _make_tray_icon(color)
-                state.tray_icon.title = f"VerbBridge² — {state.now_playing}"
+                state.tray_icon.title = f"Versespan — {state.now_playing}"
             except Exception:
                 pass
 
@@ -1040,10 +1040,10 @@ def _show_setup_dialog(pre_code: str = "") -> Optional[dict]:
     result = [None]
 
     dlg = tk.Tk()
-    dlg.title("VerbBridge² — First Run Setup")
+    dlg.title("Versespan — First Run Setup")
     dlg.resizable(False, False)
 
-    ttk.Label(dlg, text="Welcome to VerbBridge²", font=("", 13, "bold")).pack(pady=(16, 4), padx=20)
+    ttk.Label(dlg, text="Welcome to Versespan", font=("", 13, "bold")).pack(pady=(16, 4), padx=20)
     ttk.Label(
         dlg,
         text="Paste your connection code from the admin Settings page.\n"
@@ -1073,7 +1073,7 @@ def _show_setup_dialog(pre_code: str = "") -> Optional[dict]:
     manual.columnconfigure(1, weight=1)
 
     ttk.Label(manual, text="Backend URL:").grid(row=0, column=0, sticky="w")
-    url_var = tk.StringVar(value="https://verbbridge-api.fly.dev")
+    url_var = tk.StringVar(value="https://versespan-api.fly.dev")
     ttk.Entry(manual, textvariable=url_var, width=38).grid(row=0, column=1, sticky="ew", padx=(6, 0))
 
     ttk.Label(manual, text="Church ID:").grid(row=1, column=0, sticky="w", pady=(6, 0))
@@ -1201,7 +1201,7 @@ if __name__ == "__main__":
         try:
             import tkinter.messagebox as _mb
 
-            _mb.showerror("VerbBridge² — Fatal Error", msg)
+            _mb.showerror("Versespan — Fatal Error", msg)
         except Exception:
             print(msg)
         sys.exit(1)
