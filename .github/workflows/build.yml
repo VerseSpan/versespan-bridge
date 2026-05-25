@@ -26,6 +26,7 @@ jobs:
         run: >
           pyinstaller
           --onefile
+          --windowed
           --name Versespan
           --hidden-import tkinter
           --hidden-import tkinter.ttk
