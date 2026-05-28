@@ -587,6 +587,24 @@ async def _run_bridge(cfg: dict):
                                 "slide_label": slide_label,
                                 "group_name": active.get("group_name", ""),
                             }))
+                    elif last_uuid:
+                        # ProPresenter has no active presentation (operator cleared/blanked
+                        # all output). Send a cleared event so the backend deactivates song
+                        # mode and the watch page dismisses the song/scripture overlay.
+                        logger.info("ProPresenter cleared — no active presentation, sending clear event")
+                        last_uuid = ""
+                        last_slide = -1
+                        state.now_playing = "—"
+                        state.notify()
+                        await ws.send(json.dumps({
+                            "type": "presentation_changed",
+                            "name": "",
+                            "uuid": "",
+                            "slide_index": 0,
+                            "slide_text": "",
+                            "slide_label": "",
+                            "group_name": "",
+                        }))
 
         except (OSError, websockets.exceptions.WebSocketException) as e:
             logger.warning(f"Backend connection error: {e}")
